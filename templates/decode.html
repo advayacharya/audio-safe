@@ -1,0 +1,464 @@
+{% extends "base.html" %}
+{% block title %}Decode Data{% endblock %}
+
+{% block content %}
+<style>
+    /* 1. Typography & Global Reset */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap');
+
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        background-color: #000;
+        color: white;
+        overflow-x: hidden;
+    }
+
+    /* 2. Wave Animation Canvas */
+    #wave-canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100dvh; /* Mobile viewport fix */
+        z-index: 0;
+        opacity: 0.8;
+        pointer-events: none;
+    }
+
+    /* 3. Apple Glass Card */
+    .apple-glass-card {
+        background: rgba(20, 20, 25, 0.7);
+        backdrop-filter: blur(30px) saturate(180%);
+        -webkit-backdrop-filter: blur(30px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 
+            0 20px 40px rgba(0, 0, 0, 0.6),
+            0 0 0 1px rgba(0, 0, 0, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    /* MOBILE ADJUSTMENTS */
+    @media (max-width: 768px) {
+        .apple-glass-card {
+            padding: 1.5rem !important;
+            border-radius: 1.5rem;
+        }
+        h1 { font-size: 2rem !important; }
+        .btn-apple-primary { font-size: 1rem !important; padding: 0.8rem !important; }
+    }
+
+    /* 4. Matte Inputs */
+    .apple-input {
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: #fff;
+        font-size: 15px;
+        transition: all 0.2s ease;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    .apple-input:focus {
+        background: rgba(0, 0, 0, 0.6);
+        border-color: #8b5cf6;
+        box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15);
+        outline: none;
+    }
+    .apple-input::placeholder { color: rgba(255, 255, 255, 0.25); }
+
+    /* 5. Upload Zone */
+    .apple-upload {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px dashed rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+    }
+    .apple-upload:hover {
+        background: rgba(139, 92, 246, 0.05);
+        border-color: #8b5cf6;
+        transform: translateY(-1px);
+    }
+
+    /* 6. Primary Button */
+    .btn-apple-primary {
+        background: linear-gradient(180deg, #7c3aed 0%, #6d28d9 100%);
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+        box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+        transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+    .btn-apple-primary:hover {
+        filter: brightness(1.1);
+        transform: scale(1.01);
+        box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
+    }
+    .btn-apple-primary:active { transform: scale(0.98); }
+
+    /* 7. Read-only Output Area */
+    .terminal-output {
+        font-family: 'JetBrains Mono', monospace;
+        background: #09090b;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #e5e7eb;
+    }
+</style>
+
+<!-- Background Canvas -->
+<canvas id="wave-canvas"></canvas>
+
+<!-- Main Content -->
+<div class="relative min-h-screen w-full flex items-center justify-center p-4 py-12 z-10">
+    
+    <div class="w-full max-w-2xl apple-glass-card rounded-[24px] p-8 md:p-12 animate-in fade-in zoom-in duration-500">
+        
+        <header class="text-center mb-10">
+            <a href="/" class="inline-flex items-center gap-2 text-xs font-semibold text-gray-400 hover:text-white transition-colors mb-6 px-3 py-1.5 rounded-full bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10">
+                <i data-lucide="chevron-left" class="w-3 h-3"></i> Home
+            </a>
+            <h1 class="text-4xl md:text-5xl font-bold text-white tracking-tight mb-3">Decode Data</h1>
+            <p class="text-gray-400 text-base font-medium">Extract hidden secrets from audio waveforms.</p>
+        </header>
+
+        <main class="space-y-8">
+            
+            <!-- STEP 1: File Upload -->
+            <div class="space-y-3">
+                <label class="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">1. Select Encrypted File</label>
+                <div class="apple-upload h-28 rounded-2xl flex items-center justify-center relative cursor-pointer group">
+                    <input type="file" id="decode-file-input" accept=".wav" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"/>
+                    <label for="decode-file-input" id="decode-file-label" class="pointer-events-none text-gray-400 flex flex-col items-center gap-2 z-10 group-hover:text-violet-400 transition-colors">
+                        <i data-lucide="file-audio" class="w-6 h-6 mb-1 opacity-70"></i>
+                        <span id="decode-file-text" class="text-sm font-medium">Drop WAV file or click to browse</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- STEP 2: Password -->
+            <div class="space-y-3">
+                <label for="decode-password" class="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">2. Decryption Key (If required)</label>
+                <div class="relative">
+                    <input type="password" id="decode-password" class="apple-input w-full rounded-xl p-4 pl-11" placeholder="Enter password to unlock text...">
+                    <i data-lucide="lock" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4"></i>
+                </div>
+            </div>
+
+            <!-- ACTION -->
+            <div class="relative pt-4">
+                <button id="decode-btn" class="btn-apple-primary w-full py-4 rounded-xl text-white font-semibold text-lg flex items-center justify-center gap-2 shadow-lg">
+                    <i data-lucide="scan-eye" class="w-5 h-5"></i>
+                    <span>Analyze & Decode</span>
+                </button>
+                
+                <div id="decode-progress-container" class="hidden mt-4 w-full bg-gray-800/50 rounded-full h-1 overflow-hidden">
+                    <div id="decode-progress-bar" class="bg-violet-500 h-1 rounded-full w-0 transition-all duration-300"></div>
+                </div>
+                <div id="decode-status" class="mt-2 text-center text-xs font-medium text-gray-500 h-4 hidden"></div>
+            </div>
+
+            <!-- OUTPUT AREA -->
+             <div class="space-y-3">
+                <label class="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Decoded Result</label>
+                <textarea id="decoded-message-output" rows="4" class="apple-input terminal-output w-full rounded-xl p-4 resize-none" placeholder="Hidden text will appear here..." readonly></textarea>
+            </div>
+
+            <!-- RESULTS HUD -->
+            <div id="decode-result" class="hidden mt-6 pt-6 border-t border-white/10 animate-in fade-in slide-in-from-bottom-2">
+                <div class="bg-black/40 rounded-xl p-5 border border-white/5">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-2 text-emerald-400">
+                            <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+                            <span class="font-bold text-sm">Extraction Successful</span>
+                        </div>
+                        <!-- Download area for images -->
+                        <div id="decoded-file-download-area"></div>
+                    </div>
+                    
+                    <!-- Stats Grid -->
+                    <div class="grid grid-cols-2 gap-4 text-xs font-mono text-gray-400">
+                        <div class="flex justify-between"><span>Extraction:</span> <span id="extract-time" class="text-white">-</span></div>
+                        <div class="flex justify-between"><span>Decryption:</span> <span id="decrypt-time" class="text-white">-</span></div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+/**
+ * PART 1: Background Animation Logic (Liquid Physics - Mobile Touch Enabled)
+ */
+const initCanvas = () => {
+    const canvas = document.getElementById('wave-canvas');
+    const ctx = canvas.getContext('2d');
+    
+    let width, height;
+    let lines = [];
+    const mouse = { x: -500, y: -500 };
+
+    const config = {
+        lineCount: 12,
+        speed: 0.0005,
+        amplitude: 50,
+        frequency: 0.002,
+        color: '139, 92, 246',
+        repulsionRadius: 250,  
+        repulsionPower: 8000, 
+    };
+
+    function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    }
+    
+    function initLines() {
+        lines = [];
+        for(let i = 0; i < config.lineCount; i++) {
+            lines.push({
+                y: height / 2 + (Math.random() - 0.5) * 200,
+                phase: Math.random() * Math.PI * 2,
+                speed: config.speed + Math.random() * 0.0005,
+                amplitude: config.amplitude + Math.random() * 100,
+                opacity: 0.15 + Math.random() * 0.3
+            });
+        }
+    }
+
+    // --- MOBILE TOUCH SUPPORT ---
+    const updateMouse = (x, y) => { mouse.x = x; mouse.y = y; };
+    
+    window.addEventListener('mousemove', (e) => updateMouse(e.clientX, e.clientY));
+    window.addEventListener('touchmove', (e) => {
+        const touch = e.touches[0];
+        updateMouse(touch.clientX, touch.clientY);
+    }, { passive: true });
+
+    function animate() {
+        ctx.clearRect(0, 0, width, height);
+        const t = Date.now();
+
+        lines.forEach(line => {
+            ctx.beginPath();
+            const points = [];
+            for (let x = 0; x <= width + 10; x += 10) {
+                let base_y = line.y + 
+                          Math.sin(x * config.frequency + line.phase + t * line.speed) * line.amplitude +
+                          Math.sin(x * config.frequency * 0.5 + t * line.speed * 0.5) * (line.amplitude * 0.5);
+                
+                const dx = x - mouse.x;
+                const dy = base_y - mouse.y;
+                const distSq = dx*dx + dy*dy;
+                const dist = Math.sqrt(distSq);
+
+                if (dist < config.repulsionRadius) {
+                    const force = (1 - dist / config.repulsionRadius);
+                    const offset = (dy / dist) * config.repulsionPower * force * force * 0.01;
+                    base_y += offset;
+                }
+                points.push({x, y: base_y});
+            }
+
+            if (points.length > 0) {
+                ctx.moveTo(points[0].x, points[0].y);
+                for (let i = 0; i < points.length - 1; i++) {
+                    const p0 = points[i];
+                    const p1 = points[i + 1];
+                    const midX = (p0.x + p1.x) / 2;
+                    const midY = (p0.y + p1.y) / 2;
+                    ctx.quadraticCurveTo(p0.x, p0.y, midX, midY);
+                }
+                const last = points[points.length - 1];
+                ctx.lineTo(last.x, last.y);
+            }
+
+            ctx.strokeStyle = `rgba(${config.color}, ${line.opacity})`;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+        });
+        requestAnimationFrame(animate);
+    }
+
+    window.addEventListener('resize', () => { resize(); initLines(); });
+    resize();
+    initLines();
+    animate();
+};
+
+/**
+ * PART 2: Application Logic (Preserved)
+ */
+document.addEventListener('DOMContentLoaded', () => {
+    initCanvas();
+
+    let isDecoding = false;
+    const decodeBtn = document.getElementById('decode-btn');
+    const decodeStatus = document.getElementById('decode-status');
+    const decodeProgressContainer = document.getElementById('decode-progress-container');
+    const decodeProgressBar = document.getElementById('decode-progress-bar');
+    const decodeFileInput = document.getElementById('decode-file-input');
+    const decodeFileLabel = document.getElementById('decode-file-label');
+    const decodeFileText = document.getElementById('decode-file-text'); // New ID
+    const decodePasswordInput = document.getElementById('decode-password');
+    const decodedMessageOutput = document.getElementById('decoded-message-output');
+
+    const decodeResult = document.getElementById('decode-result');
+    const decodedFileDownloadArea = document.getElementById('decoded-file-download-area');
+    const extractTimeEl = document.getElementById('extract-time');
+    const decryptTimeEl = document.getElementById('decrypt-time');
+
+    // SECURITY FIX: Safe File Label Logic
+    // Only init if element exists
+    if(decodeFileText) {
+        const defaultText = decodeFileText.textContent;
+        
+        decodeFileInput.addEventListener('change', () => {
+            decodeResult.classList.add('hidden');
+            decodedMessageOutput.value = '';
+
+            if (decodeFileInput.files.length > 0) {
+                 const name = decodeFileInput.files[0].name;
+                 // Use safe innerHTML structure but inject name safely
+                 decodeFileLabel.innerHTML = `
+                    <div class="flex items-center gap-2 text-violet-300">
+                        <i data-lucide="check-circle" class="w-5 h-5"></i>
+                        <span class="font-semibold text-white truncate max-w-[200px]" id="safe-name"></span>
+                    </div>`;
+                 decodeFileLabel.querySelector('#safe-name').textContent = name;
+                 lucide.createIcons();
+            } else {
+                 // Restore default
+                 decodeFileLabel.innerHTML = '';
+                 const icon = document.createElement('i');
+                 icon.setAttribute('data-lucide', 'file-audio');
+                 icon.className = "w-6 h-6 mb-1 opacity-70";
+                 
+                 const span = document.createElement('span');
+                 span.className = "text-sm font-medium";
+                 span.textContent = defaultText;
+                 
+                 decodeFileLabel.appendChild(icon);
+                 decodeFileLabel.appendChild(span);
+                 lucide.createIcons();
+            }
+        });
+    }
+
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+    async function simulateProgress(progressBar) {
+        progressBar.style.width = '0%';
+        let pct = 0;
+        while (pct < 90) {
+            pct += Math.random() * 12;
+            if (pct > 90) pct = 90;
+            progressBar.style.width = pct + '%';
+            await sleep(200 + Math.random() * 200);
+        }
+    }
+
+    decodeBtn.addEventListener('click', async () => {
+        if (isDecoding) return;
+        isDecoding = true;
+
+        const file = decodeFileInput.files[0];
+        const password = decodePasswordInput.value;
+        if (!file) {
+            alert("Please select a file to decode.");
+            isDecoding = false;
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('stego_file', file);
+        formData.append('password', password);
+
+        if(decodeStatus) {
+            decodeStatus.textContent = 'Decrypting...';
+            decodeStatus.classList.remove('hidden');
+        }
+        decodeProgressContainer.classList.remove('hidden');
+        decodeProgressBar.style.width = '0%';
+        decodeBtn.disabled = true;
+        decodeBtn.style.opacity = '0.7';
+
+        simulateProgress(decodeProgressBar);
+
+        try {
+            const resp = await fetch('/decode_data', { method: 'POST', body: formData });
+            if (!resp.ok) {
+                const err = await resp.json().catch(()=>({error:'Server error'}));
+                throw new Error(err.error || 'Server error');
+            }
+            const data = await resp.json();
+
+            // Hide previous
+            decodeResult.classList.add('hidden');
+            decodedFileDownloadArea.innerHTML = '';
+            decodedMessageOutput.value = '';
+
+            // Handle Text
+            if (data.type === 'text') {
+                decodedMessageOutput.value = data.content || '';
+                const analytics = data.analytics || {};
+                extractTimeEl.textContent = (analytics.extraction_time ?? '-') + 's';
+                decryptTimeEl.textContent = (analytics.decryption_time ?? '-') + 's';
+                
+                decodeResult.classList.remove('hidden');
+                if(decodeStatus) decodeStatus.textContent = 'Success';
+            } 
+            // Handle Image
+            else if (data.type === 'image') {
+                const b64 = data.file_b64;
+                const filename = data.filename || 'decoded_image.png';
+                const binary = atob(b64);
+                const len = binary.length;
+                const arr = new Uint8Array(len);
+                for (let i = 0; i < len; i++) arr[i] = binary.charCodeAt(i);
+                const blob = new Blob([arr], { type: 'application/octet-stream' });
+                const urlObj = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = urlObj;
+                a.download = filename;
+                a.textContent = 'Download Image';
+                // Button Style for download link
+                a.className = 'text-xs bg-white text-black hover:bg-gray-200 px-4 py-2 rounded-lg font-bold transition-colors shadow-lg';
+                
+                decodedFileDownloadArea.appendChild(a);
+                decodedMessageOutput.value = 'Image successfully extracted. Click download above.';
+                
+                const analytics = data.analytics || {};
+                extractTimeEl.textContent = (analytics.extraction_time ?? '-') + 's';
+                decryptTimeEl.textContent = '-';
+                
+                decodeResult.classList.remove('hidden');
+                if(decodeStatus) decodeStatus.textContent = 'Success';
+            } else {
+                throw new Error('Unknown data type returned.');
+            }
+
+            decodeProgressBar.style.width = '100%';
+            
+            // Auto scroll to result
+            setTimeout(() => {
+                decodeResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+
+        } catch (err) {
+            if(decodeStatus) decodeStatus.textContent = 'Error: ' + err.message;
+            console.error(err);
+        } finally {
+            decodeBtn.disabled = false;
+            decodeBtn.style.opacity = '1';
+            await sleep(400);
+            if(decodeStatus) decodeStatus.classList.add('hidden');
+            // We keep progress bar hidden after completion to be clean? 
+            // Or keep it full? Usually clean is better.
+            // decodeProgressContainer.classList.add('hidden');
+            isDecoding = false;
+        }
+    });
+});
+</script>
+{% endblock %}

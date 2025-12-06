@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Secure Audio Messenger{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <style>
+        html.dark { color-scheme: dark; }
+        body { font-family: 'Inter', sans-serif; }
+        .progress-bar-fill { animation: progressFill 4s ease-out forwards; }
+        .sparkle { position: absolute; opacity: 0; animation: sparkle-animation 1s ease-out; }
+        .ring { border-color: transparent; border-top-color: currentColor; }
+        @keyframes progressFill { from { width: 0% } to { width: 100% } }
+        @keyframes sparkle-animation { 0% { transform: scale(0); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+        :root { --glow-color-encode: #10b981; --glow-color-decode: #8b5cf6; }
+        .shadow-glow-encode { box-shadow: 0 0 20px 5px var(--glow-color-encode); }
+        .shadow-glow-decode { box-shadow: 0 0 20px 5px var(--glow-color-decode); }
+
+        /* Analytics panel */
+        .analytics-panel { background: rgba(255,255,255,0.06); padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06); }
+        .kv { display:flex; justify-content:space-between; gap:1rem; font-family: monospace; }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 transition-colors duration-300">
+    <div class="fixed top-6 right-6 z-10">
+        <button id="theme-toggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+            <i data-lucide="sun" class="block dark:hidden"></i>
+            <i data-lucide="moon" class="hidden dark:block"></i>
+        </button>
+    </div>
+    <div class="absolute top-0 left-0 w-full h-full overflow-hidden">
+        <div class="absolute top-0 -left-1/4 w-96 h-96 bg-emerald-400 dark:bg-emerald-600 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div>
+        <div class="absolute bottom-0 -right-1/4 w-96 h-96 bg-violet-400 dark:bg-violet-600 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse animation-delay-2000"></div>
+    </div>
+
+    <main class="min-h-screen w-full flex items-center justify-center p-4 z-10 relative">
+        {% block content %}{% endblock %}
+    </main>
+
+    <script>
+        lucide.createIcons();
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            lucide.createIcons();
+        });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

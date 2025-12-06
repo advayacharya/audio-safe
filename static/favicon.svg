@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Lock Body -->
+  <rect x="96" y="200" width="320" height="240" rx="40" fill="#8b5cf6"/>
+  <!-- Keyhole -->
+  <circle cx="256" cy="310" r="30" fill="#1e1b4b"/>
+  <rect x="240" y="310" width="32" height="70" rx="10" fill="#1e1b4b"/>
+  <!-- Audio Wave Shackle -->
+  <path d="M140 200v-60c0-60 50-100 116-100s116 40 116 100v60" stroke="#a78bfa" stroke-width="40" fill="none" stroke-linecap="round"/>
+  <!-- Digital Bits -->
+  <circle cx="180" cy="80" r="15" fill="#fff"/>
+  <circle cx="256" cy="60" r="15" fill="#fff"/>
+  <circle cx="332" cy="80" r="15" fill="#fff"/>
+</svg>
