@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Success{% endblock %}
+
+{% block content %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; background-color: #000; color: white; }
+    
+    .apple-card {
+        background: rgba(20, 20, 25, 0.7);
+        backdrop-filter: blur(30px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    }
+    
+    .btn-download {
+        background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+        border-top: 1px solid rgba(255,255,255,0.2);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        transition: all 0.2s ease;
+    }
+    .btn-download:hover { transform: scale(1.02); filter: brightness(1.1); }
+</style>
+
+<div class="relative min-h-screen w-full flex items-center justify-center p-4">
+    <div class="w-full max-w-md apple-card rounded-[24px] p-10 text-center animate-in fade-in zoom-in duration-300">
+        
+        <div class="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+            <i data-lucide="check-circle" class="w-10 h-10 text-emerald-400"></i>
+        </div>
+
+        <h1 class="text-3xl font-bold text-white mb-2">Encryption Ready!</h1>
+        <p class="text-gray-400 mb-8">Your secret data has been successfully embedded.</p>
+
+        <!-- THE DOWNLOAD BUTTON -->
+        <!-- The 'download' attribute forces the browser to Save As instead of Play -->
+        <a href="{{ url_for('static', filename='downloads/' + filename) }}" download 
+           class="btn-download w-full py-4 rounded-xl text-white font-bold text-lg flex items-center justify-center gap-2 mb-4">
+            <i data-lucide="download" class="w-5 h-5"></i>
+            Download Audio File
+        </a>
+
+        <a href="{{ url_for('encode_page') }}" class="text-sm text-gray-500 hover:text-white transition-colors">
+            Encrypt another file
+        </a>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => lucide.createIcons());
+</script>
+{% endblock %}
